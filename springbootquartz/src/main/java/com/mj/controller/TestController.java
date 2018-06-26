@@ -9,6 +9,10 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
+
 @RestController
 @RequestMapping("/v1")
 public class TestController {
@@ -26,28 +30,67 @@ public class TestController {
 //            }
 //        });
 
-        List<Developer> team = new ArrayList<>();
-        Developer polyglot = new Developer("esoteric");
-        polyglot.add("java");
-        polyglot.add("scala");
-        polyglot.add("groovy");
-        polyglot.add("go");
+//        List<Developer> team = new ArrayList<>();
+//        Developer polyglot = new Developer("esoteric");
+//        polyglot.add("java");
+//        polyglot.add("scala");
+//        polyglot.add("groovy");
+//        polyglot.add("go");
+//
+//        Developer busy = new Developer("pragmatic");
+//        busy.add("java");
+//        busy.add("javascript");
+//
+//        team.add(polyglot);
+//        team.add(busy);
+//
+//        List<String> collect = team.stream()
+//                .map(Developer::getLanguages)
+//                .flatMap(Collection::stream)
+//                .distinct()
+//                .map(String::toUpperCase)
+//                .collect(Collectors.toList());
+//
+//        collect.forEach(System.out::println);
 
-        Developer busy = new Developer("pragmatic");
-        busy.add("java");
-        busy.add("javascript");
+        ReserveOrderReport build = ReserveOrderReport.builder()
+                .groupTypeName("region")
+                .skuName("冰逸")
+                .reservationCount(1)
+                .forceRedeemedCount(1)
+                .forceUnreservedRedeemedCount(1)
+                .normalRedeemedCount(1)
+                .storeRedeemed(1)
+                .sstTmallCount(1)
+                .esstWechatCount(1)
+                .esstB2bCount(1)
+                .storeId("")
+                .build();
 
-        team.add(polyglot);
-        team.add(busy);
+        ReserveOrderReport build1 = ReserveOrderReport.builder()
+                .groupTypeName("region1")
+                .skuName("冰逸1")
+                .reservationCount(2)
+                .forceRedeemedCount(1)
+                .forceUnreservedRedeemedCount(1)
+                .normalRedeemedCount(1)
+                .storeRedeemed(1)
+                .sstTmallCount(1)
+                .esstWechatCount(1)
+                .esstB2bCount(1)
+                .storeId("")
+                .build();
 
-        List<String> collect = team.stream()
-                .map(Developer::getLanguages)
-                .flatMap(Collection::stream)
-                .distinct()
-                .map(String::toUpperCase)
-                .collect(Collectors.toList());
+        List<ReserveOrderReport> list = new ArrayList<>();
+        list.add(build);
+        list.add(build1);
 
-        collect.forEach(System.out::println);
+
+        Integer collect = list.stream()
+                .mapToInt(ReserveOrderReport::getReservationCount).sum();
+        System.out.print(collect);
+
+
     }
 
 

@@ -23,6 +23,8 @@ public class TestController {
     }
 
     public static void main(String[] args) {
+
+
 //        List<String> collect = Stream.of(args).filter(item -> !item.equals("test")).toArray(new IntFunction<String>() {
 //            @Override
 //            public String apply(int value) {

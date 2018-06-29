@@ -1,9 +1,18 @@
 package com.mj.controller;
 
 
+import org.apache.logging.log4j.util.PropertiesUtil;
+import org.assertj.core.util.Maps;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -23,105 +32,79 @@ public class TestController {
     }
 
     public static void main(String[] args) {
-
-
-//        List<String> collect = Stream.of(args).filter(item -> !item.equals("test")).toArray(new IntFunction<String>() {
-//            @Override
-//            public String apply(int value) {
-//                return args[value];
-//            }
-//        });
-
-//        List<Developer> team = new ArrayList<>();
-//        Developer polyglot = new Developer("esoteric");
-//        polyglot.add("java");
-//        polyglot.add("scala");
-//        polyglot.add("groovy");
-//        polyglot.add("go");
-//
-//        Developer busy = new Developer("pragmatic");
-//        busy.add("java");
-//        busy.add("javascript");
-//
-//        team.add(polyglot);
-//        team.add(busy);
-//
-//        List<String> collect = team.stream()
-//                .map(Developer::getLanguages)
-//                .flatMap(Collection::stream)
-//                .distinct()
-//                .map(String::toUpperCase)
-//                .collect(Collectors.toList());
-//
-//        collect.forEach(System.out::println);
-
-        ReserveOrderReport build = ReserveOrderReport.builder()
-                .groupTypeName("region")
-                .skuName("冰逸")
-                .reservationCount(1)
-                .forceRedeemedCount(1)
-                .forceUnreservedRedeemedCount(1)
-                .normalRedeemedCount(1)
-                .storeRedeemed(1)
-                .sstTmallCount(1)
-                .esstWechatCount(1)
-                .esstB2bCount(1)
-                .storeId("")
-                .build();
-
-        ReserveOrderReport build1 = ReserveOrderReport.builder()
-                .groupTypeName("region1")
-                .skuName("冰逸1")
-                .reservationCount(2)
-                .forceRedeemedCount(1)
-                .forceUnreservedRedeemedCount(1)
-                .normalRedeemedCount(1)
-                .storeRedeemed(1)
-                .sstTmallCount(1)
-                .esstWechatCount(1)
-                .esstB2bCount(1)
-                .storeId("")
-                .build();
-
-        List<ReserveOrderReport> list = new ArrayList<>();
-        list.add(build);
-        list.add(build1);
-
-
-        Integer collect = list.stream()
-                .mapToInt(ReserveOrderReport::getReservationCount).sum();
-        System.out.print(collect);
-
-
+        System.out.println(isOverduedHoliday(
+                Timestamp.valueOf("2018-06-22 00:00:00.000"),
+                false));
     }
 
 
-    static class Developer {
+    private static boolean isOverduedHoliday(Date oDate, boolean isHolidayOpen){
+        if(!isHolidayOpen){
+            String[] holidays = "2018-02-15,2018-02-21,2018-04-05,2018-04-06,2018-04-07,2018-04-29,2018-04-30,2018-05-01,2018-06-16,2018-06-17,2018-06-18,2018-09-22,2018-09-23,2018-09-24,2018-10-01,2018-10-02,2018-10-03,2018-10-04,2018-10-05,2018-10-06,2018-10-07".split(",");
+            List<String> holidayList = Arrays.asList(holidays);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(oDate);
+            int paraDate = calendar.get(Calendar.DAY_OF_YEAR);
 
-        private String name;
-        private Set<String> languages;
+            int minusDate = 0;
+            Calendar cal = Calendar.getInstance();
+            Calendar cal2 = Calendar.getInstance();
+            try {
+                cal2.setTime(sdf.parse(holidays[2]));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            cal2.add(Calendar.DAY_OF_YEAR, 1);
+            String formattedCurrentTime = sdf.format(cal.getTime());
+            if(holidayList.contains(formattedCurrentTime)) {
+                return false;
+            }
 
-        public Developer(String name) {
-            this.languages = new HashSet<>();
-            this.name = name;
+            holidayList.sort(Comparator.comparing(String::new));
+            Map<String, List<String>> groupHoliday = groupHoliday(holidayList);
+            groupHoliday.entrySet().forEach(item -> {
+                Optional<String> endOfHoliday = item.getValue().stream().max(Comparator.comparing(String::new));
+                Optional<String> startOfHoliday = item.getValue().stream().min(Comparator.comparing(String::new));
+                dealHolidayOverDue(startOfHoliday.get(),endOfHoliday.get(),LocalDate.now().toString(),2,calendar);
+            });
+            cal.add(Calendar.DAY_OF_YEAR, -2);
+            return cal.getTimeInMillis() > calendar.getTimeInMillis();
         }
 
+        return false;
+    }
 
-        public String getName() {
-            return name;
+    private static Map<String, List<String>> groupHoliday(List<String> holidayList) {
+        String firstHoliday = holidayList.get(0);
+        Map<String,List<String>> groupHoliday = new HashMap<>();
+        List<String> list = new ArrayList<>();
+        String groupKey = holidayList.get(0);
+        int count = 0;
+        for(int i=0;i<holidayList.size();i++) {
+            String holiday = holidayList.get(i);
+            if(LocalDate.parse(holiday).getDayOfYear() - LocalDate.parse(firstHoliday).getDayOfYear() > i - count) {
+                count = i;
+                firstHoliday = holiday;
+                groupKey = holiday;
+                list = new ArrayList<>();
+            }
+            list.add(holiday);
+            groupHoliday.put(groupKey,list);
         }
+        return groupHoliday;
+    }
 
-        public void setName(String name) {
-            this.name = name;
-        }
 
-        public void add(String language) {
-            this.languages.add(language);
+    private static boolean dealHolidayOverDue(String startOfHoliday,String endOfHoliday,String currentDay,Integer overDayToSend,Calendar lastCheckTime) {
+        int compareTo = LocalDate.parse(currentDay).compareTo(LocalDate.parse(endOfHoliday));
+        if(compareTo > 0 && compareTo <= overDayToSend) {
+            LocalDate beforeHoliday = LocalDate.parse(startOfHoliday).minus(overDayToSend + 1 - compareTo, ChronoUnit.DAYS);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date(Timestamp.valueOf(beforeHoliday.atTime(LocalTime.MIN)).getTime()));
+            return cal.getTimeInMillis() > lastCheckTime.getTimeInMillis();
         }
-
-        public Set<String> getLanguages() {
-            return languages;
-        }
+        return false;
     }
 
 }

@@ -55,6 +55,7 @@ public class TestController {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
+
             cal2.add(Calendar.DAY_OF_YEAR, 1);
             String formattedCurrentTime = sdf.format(cal.getTime());
             if(holidayList.contains(formattedCurrentTime)) {
